@@ -1,0 +1,57 @@
+version: '3.8'
+
+networks:
+  traefik:
+    external: false
+
+services:
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik
+    restart: unless-stopped
+
+  faro-test-app:
+    build: .
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.faro-test.rule=Host(`grafana-alloy.127.0.0.1.nip.io`)"
+      - "traefik.http.services.faro-test.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik"
+
+  faro-test-dev:
+    build:
+      context: .
+      target: builder
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+    environment:
+      - NODE_ENV=development
+    networks:
+      - traefik
+    profiles:
+      - dev
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.faro-test-dev.rule=Host(`grafana-alloy-dev.127.0.0.1.nip.io`)"
+      - "traefik.http.services.faro-test-dev.loadbalancer.server.port=5173"
+      - "traefik.docker.network=traefik"
