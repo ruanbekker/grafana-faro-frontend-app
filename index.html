@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faro Test Application</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>🔍 Faro Test Application</h1>
+            <p>Testing Grafana Faro observability integration</p>
+        </header>
+
+        <main>
+            <section class="test-section">
+                <h2>Console Logging Tests</h2>
+                <div class="button-group">
+                    <button id="log-info" class="btn btn-info">Log Info</button>
+                    <button id="log-warn" class="btn btn-warn">Log Warning</button>
+                    <button id="log-error" class="btn btn-error">Log Error</button>
+                    <button id="log-debug" class="btn btn-debug">Log Debug</button>
+                </div>
+            </section>
+
+            <section class="test-section">
+                <h2>Custom Events</h2>
+                <div class="button-group">
+                    <button id="custom-event" class="btn btn-primary">Send Custom Event</button>
+                    <button id="user-action" class="btn btn-primary">Simulate User Action</button>
+                    <button id="page-view" class="btn btn-primary">Track Page View</button>
+                </div>
+            </section>
+
+            <section class="test-section">
+                <h2>Error Testing</h2>
+                <div class="button-group">
+                    <button id="throw-error" class="btn btn-danger">Throw Error</button>
+                    <button id="promise-error" class="btn btn-danger">Promise Rejection</button>
+                    <button id="network-error" class="btn btn-danger">Simulate Network Error</button>
+                </div>
+            </section>
+
+            <section class="test-section">
+                <h2>Performance Testing</h2>
+                <div class="button-group">
+                    <button id="slow-operation" class="btn btn-secondary">Slow Operation</button>
+                    <button id="api-call" class="btn btn-secondary">Simulate API Call</button>
+                    <button id="navigation" class="btn btn-secondary">Simulate Navigation</button>
+                </div>
+            </section>
+
+            <section class="test-section">
+                <h2>User Context</h2>
+                <div class="form-group">
+                    <input type="text" id="user-id" placeholder="Enter User ID" value="test-user-123">
+                    <input type="email" id="user-email" placeholder="Enter Email" value="test@example.com">
+                    <button id="set-user" class="btn btn-success">Set User Context</button>
+                </div>
+            </section>
+
+            <section class="test-section">
+                <h2>Form Testing</h2>
+                <form id="test-form">
+                    <div class="form-group">
+                        <label for="test-input">Test Input:</label>
+                        <input type="text" id="test-input" name="testInput" placeholder="Type something...">
+                    </div>
+                    <div class="form-group">
+                        <label for="test-select">Test Select:</label>
+                        <select id="test-select" name="testSelect">
+                            <option value="">Choose option...</option>
+                            <option value="option1">Option 1</option>
+                            <option value="option2">Option 2</option>
+                            <option value="option3">Option 3</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Form</button>
+                </form>
+            </section>
+        </main>
+
+        <footer>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Events Sent:</span>
+                    <span id="events-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Errors Logged:</span>
+                    <span id="errors-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Status:</span>
+                    <span id="faro-status">Initializing...</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
