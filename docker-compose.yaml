@@ -3,8 +3,16 @@ version: '3.8'
 networks:
   traefik:
     external: false
+  observability:
+    external: false
+
+volumes:
+  grafana-data:
+  loki-data:
+  tempo-data:
 
 services:
+  # Traefik reverse proxy
   traefik:
     image: traefik:v3.0
     command:
@@ -16,25 +24,123 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
+      - "8080:8080"  # Traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - traefik
     restart: unless-stopped
 
-  faro-test-app:
-    build: .
-    environment:
-      - NODE_ENV=production
-    restart: unless-stopped
+  # Loki for logs
+  loki:
+    image: grafana/loki:3.0.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+      - ./config/loki-config.yaml:/etc/loki/local-config.yaml
     networks:
       - traefik
+      - observability
+    restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.faro-test.rule=Host(`grafana-alloy.127.0.0.1.nip.io`)"
-      - "traefik.http.services.faro-test.loadbalancer.server.port=80"
+      - "traefik.http.routers.loki.rule=Host(`loki.127.0.0.1.nip.io`)"
+      - "traefik.http.services.loki.loadbalancer.server.port=3100"
       - "traefik.docker.network=traefik"
+
+  # Tempo for traces
+  tempo:
+    image: grafana/tempo:2.4.1
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./config/tempo-config.yaml:/etc/tempo.yaml
+      - tempo-data:/tmp/tempo
+    ports:
+      - "3200:3200"   # tempo
+      - "4317:4317"   # otlp grpc
+      - "4318:4318"   # otlp http
+    networks:
+      - traefik
+      - observability
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tempo.rule=Host(`tempo.127.0.0.1.nip.io`)"
+      - "traefik.http.services.tempo.loadbalancer.server.port=3200"
+      - "traefik.docker.network=traefik"
+
+  # Grafana Alloy
+  alloy:
+    image: grafana/alloy:v1.0.0
+    volumes:
+      - ./config/alloy-config.alloy:/etc/alloy/config.alloy
+    ports:
+      - "12345:12345"  # alloy http
+      - "12347:12347"  # faro receiver
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+    networks:
+      - traefik
+      - observability
+    restart: unless-stopped
+    depends_on:
+      - loki
+      - tempo
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alloy.rule=Host(`alloy.127.0.0.1.nip.io`)"
+      - "traefik.http.services.alloy.loadbalancer.server.port=12345"
+      - "traefik.docker.network=traefik"
+      # Faro endpoint
+      - "traefik.http.routers.alloy-faro.rule=Host(`faro.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.alloy-faro.service=alloy-faro"
+      - "traefik.http.services.alloy-faro.loadbalancer.server.port=12347"
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:10.4.1
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_FEATURE_TOGGLES_ENABLE=correlations,traceqlEditor,flameGraph
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./config/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./dashboards:/var/lib/grafana/dashboards
+    networks:
+      - traefik
+      - observability
+    restart: unless-stopped
+    depends_on:
+      - loki
+      - tempo
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.127.0.0.1.nip.io`)"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik"
+
+  # Your test applications
+#  faro-test-app:
+#    build: .
+#    environment:
+#      - NODE_ENV=production
+#    restart: unless-stopped
+#    networks:
+#      - traefik
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.faro-test.rule=Host(`app.127.0.0.1.nip.io`)"
+#      - "traefik.http.services.faro-test.loadbalancer.server.port=80"
+#      - "traefik.docker.network=traefik"
 
   faro-test-dev:
     build:
@@ -52,6 +158,6 @@ services:
       - dev
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.faro-test-dev.rule=Host(`grafana-alloy-dev.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.faro-test-dev.rule=Host(`dev.127.0.0.1.nip.io`)"
       - "traefik.http.services.faro-test-dev.loadbalancer.server.port=5173"
       - "traefik.docker.network=traefik"

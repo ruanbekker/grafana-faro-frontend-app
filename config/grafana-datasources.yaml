@@ -1,0 +1,36 @@
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    uid: loki_uid
+    isDefault: false
+    editable: true
+    jsonData:
+      derivedFields:
+        - name: "TraceID"
+          matcherRegex: "trace_id=(\\w+)"
+          url: "$${__value.raw}"
+          datasourceUid: "tempo_uid"
+          
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    uid: tempo_uid
+    isDefault: false
+    editable: true
+    jsonData:
+      tracesToLogs:
+        datasourceUid: 'loki_uid'
+        tags: ['job', 'service']
+        mappedTags: [{ key: 'service.name', value: 'service' }]
+        mapTagNamesEnabled: false
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: false
+        filterBySpanID: false
+      nodeGraph:
+        enabled: true

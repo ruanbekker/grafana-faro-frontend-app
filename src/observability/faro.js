@@ -23,7 +23,7 @@ export const initializeObservability = () => {
         }
 
         faroInstance = initializeFaro({
-      url: 'http://grafana-alloy.127.0.0.1.nip.io/collect',
+      url: 'http://faro.127.0.0.1.nip.io/collect',
             app: {
                 name: 'faro-test-app',
                 version: '1.0.0',
