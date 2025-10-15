@@ -2,6 +2,12 @@
 
 A test application for Grafana Faro observability integration.
 
+## Requirements
+
+You will need a stack with Alloy, Grafana, Loki, etc:
+
+- [helm-values.yaml](https://github.com/ruanbekker/grafana-alloy-examples/blob/main/values/alloy-faro-latest.yaml)
+
 ## Features
 
 - Console logging tests
