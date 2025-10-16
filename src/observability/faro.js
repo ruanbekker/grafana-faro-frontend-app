@@ -1,4 +1,5 @@
-import { initializeFaro, getWebInstrumentations } from '@grafana/faro-web-sdk';
+import { initializeFaro, getWebInstrumentations, PerformanceInstrumentation } from '@grafana/faro-web-sdk';
+import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 
 let faroInstance = null;
 let eventCount = 0;
@@ -23,9 +24,9 @@ export const initializeObservability = () => {
         }
 
         faroInstance = initializeFaro({
-      url: 'http://grafana-alloy.127.0.0.1.nip.io/collect',
+            url: 'http://192.168.0.50:12347/collect',
             app: {
-                name: 'faro-test-app',
+                name: 'faro-test-app', // this becomes `service_name`
                 version: '1.0.0',
                 environment: 'test'
             },
@@ -34,6 +35,14 @@ export const initializeObservability = () => {
                     captureConsole: true,
                     captureConsoleDisabledLevels: [],
                 }),
+		new TracingInstrumentation({
+		    resourceAttributes: {
+		        service: 'frontend',
+			cluster: 'local',
+		    },
+		    autoStart: true,
+		}),
+		new PerformanceInstrumentation(),
             ],
             // Set user context
             user: {
