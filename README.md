@@ -30,7 +30,7 @@ npm run dev
 ### Queries
 
 <details>
-  <summary>Different Queries</summary>
+  <summary>Loki Queries</summary>
 
 To view logs for specific events:
 
@@ -138,6 +138,17 @@ avg_over_time({app_name="faro-test-app"}
 | json 
 | event_name="faro.tracing.fetch" 
 | unwrap event_data_duration_ns / 1000000 [5m]) # Convert to milliseconds
+```
+
+</details>
+
+<details>
+  <summary>Tempo Queries</summary>
+
+To view the spans of a service called `faro-app`:
+
+```
+{resource.service.name="faro-app"}
 ```
 
 </details>
